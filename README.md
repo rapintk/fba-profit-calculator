@@ -2,7 +2,7 @@
 
 Amazon FBA True Profit Calculator — free, no login, works offline.
 
-**Live demo:** https://[username].github.io/[repo-name]
+**Live demo:**https://rapintk.github.io/fba-profit-calculator/
 
 ---
 
