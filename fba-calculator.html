@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amazon FBA Profit Calculator</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #222535;
+    --border: #2e3148;
+    --accent: #6366f1;
+    --accent-dim: #4f52cc;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --label: #94a3b8;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .header-icon {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+
+  .header h1 { font-size: 18px; font-weight: 700; }
+  .header p { font-size: 12px; color: var(--muted); }
+
+  .layout {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 16px;
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+
+  .card-title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: block;
+    font-size: 12px;
+    color: var(--label);
+    margin-bottom: 5px;
+    font-weight: 500;
+  }
+
+  .input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .input-prefix {
+    position: absolute;
+    left: 10px;
+    color: var(--muted);
+    font-size: 13px;
+    pointer-events: none;
+  }
+
+  .input-suffix {
+    position: absolute;
+    right: 10px;
+    color: var(--muted);
+    font-size: 13px;
+    pointer-events: none;
+  }
+
+  input[type="number"], select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    padding: 9px 12px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color .15s;
+    appearance: none;
+  }
+
+  input[type="number"]:focus, select:focus {
+    border-color: var(--accent);
+  }
+
+  input.has-prefix { padding-left: 24px; }
+  input.has-suffix { padding-right: 28px; }
+
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px;
+    cursor: pointer;
+  }
+
+  .fba-fee-badge {
+    display: inline-block;
+    margin-top: 5px;
+    font-size: 11px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 8px;
+    color: var(--label);
+  }
+
+  .fba-fee-badge span { color: var(--accent); font-weight: 600; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* Sliders */
+  .slider-section { margin-top: 20px; }
+
+  .slider-field { margin-bottom: 16px; }
+  .slider-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .slider-label { font-size: 12px; color: var(--label); font-weight: 500; }
+  .slider-value {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 40px;
+    text-align: right;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border);
+    outline: none;
+    cursor: pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--bg);
+  }
+
+  /* Results */
+  .profit-hero {
+    background: linear-gradient(135deg, #1e2040 0%, #1a1d27 100%);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .profit-hero .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .profit-hero .amount {
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .profit-hero .margin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--surface2);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .positive { color: var(--green); }
+  .negative { color: var(--red); }
+  .warn { color: var(--yellow); }
+
+  .fee-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .fee-table tr {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .fee-table tr:last-child { border-bottom: none; }
+
+  .fee-table td {
+    padding: 9px 4px;
+    font-size: 13px;
+  }
+
+  .fee-table td:last-child {
+    text-align: right;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    min-width: 80px;
+  }
+
+  .fee-table .row-label { color: var(--label); }
+  .fee-table .row-cost { color: var(--red); }
+  .fee-table .row-revenue { color: var(--text); }
+  .fee-table .row-total {
+    font-weight: 700;
+    font-size: 14px;
+    border-top: 2px solid var(--border) !important;
+  }
+
+  .fee-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .metric-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+  }
+
+  .metric-card .m-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 4px;
+  }
+
+  .metric-card .m-value {
+    font-size: 20px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .metric-card .m-desc {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .monthly-section {
+    margin-top: 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+  }
+
+  .monthly-section .m-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 10px;
+  }
+
+  .monthly-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    padding: 4px 0;
+    color: var(--label);
+  }
+
+  .monthly-row .val {
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .monthly-row.total {
+    border-top: 1px solid var(--border);
+    margin-top: 6px;
+    padding-top: 10px;
+    color: var(--text);
+    font-weight: 700;
+    font-size: 14px;
+  }
+
+  .monthly-row.total .val { color: var(--green); }
+  .monthly-row.total .val.neg { color: var(--red); }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 16px 0;
+  }
+
+  /* Warning banner */
+  .warning-banner {
+    display: none;
+    background: rgba(239,68,68,.1);
+    border: 1px solid rgba(239,68,68,.3);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--red);
+    margin-bottom: 16px;
+  }
+
+  .warning-banner.show { display: block; }
+
+  /* Tooltip */
+  .tip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    margin-left: 5px;
+    cursor: default;
+  }
+
+  .tip-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 700;
+    font-style: normal;
+    line-height: 1;
+    user-select: none;
+  }
+
+  .tip-box {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e2236;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    font-size: 11px;
+    color: var(--label);
+    line-height: 1.5;
+    width: 230px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.4);
+    pointer-events: none;
+    z-index: 100;
+    white-space: normal;
+  }
+
+  .tip-box::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--border);
+  }
+
+  .tip:hover .tip-box { display: block; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">📦</div>
+  <div>
+    <h1>FBA Profit Calculator</h1>
+    <p>Amazon FBA fee structure · Real-time · No login required</p>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- LEFT: INPUTS -->
+  <div>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">Product Details</div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label>Selling Price</label>
+          <div class="input-wrap">
+            <span class="input-prefix">$</span>
+            <input type="number" id="price" class="has-prefix" value="29.99" min="0" step="0.01">
+          </div>
+        </div>
+        <div class="field">
+          <label>Product Cost (COGS)</label>
+          <div class="input-wrap">
+            <span class="input-prefix">$</span>
+            <input type="number" id="cogs" class="has-prefix" value="8.00" min="0" step="0.01">
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Inbound Shipping Cost per Unit</label>
+        <div class="input-wrap">
+          <span class="input-prefix">$</span>
+          <input type="number" id="shipping" class="has-prefix" value="1.50" min="0" step="0.01">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Category</label>
+        <select id="category">
+          <option value="electronics">Electronics (8%)</option>
+          <option value="clothing">Clothing (17%)</option>
+          <option value="books">Books (15%)</option>
+          <option value="home" selected>Home &amp; Kitchen (15%)</option>
+          <option value="toys">Toys (15%)</option>
+          <option value="other">Other (15%)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>FBA Size Tier</label>
+        <select id="sizeTier">
+          <option value="small_standard" selected>Small Standard</option>
+          <option value="large_standard">Large Standard</option>
+          <option value="small_oversize">Small Oversize</option>
+          <option value="medium_oversize">Medium Oversize</option>
+          <option value="large_oversize">Large Oversize</option>
+          <option value="special_oversize">Special Oversize</option>
+        </select>
+        <div class="fba-fee-badge">FBA fulfillment fee: <span id="fbaFeeDisplay">$3.22</span></div>
+      </div>
+
+      <div class="field">
+        <label>Monthly Units Sold</label>
+        <input type="number" id="units" value="100" min="1" step="1">
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label>ACoS % <span class="tip"><i class="tip-icon">i</i><span class="tip-box">Advertising Cost of Sales: % of revenue spent on PPC ads. e.g. 25% ACoS = $25 ad spend per $100 revenue.</span></span></label>
+          <div class="input-wrap">
+            <input type="number" id="acos" class="has-suffix" value="25" min="0" max="100" step="0.1">
+            <span class="input-suffix">%</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Return Rate % <span class="tip"><i class="tip-icon">i</i><span class="tip-box">% of units customers return. FBA average is 3–8%. Electronics can be 15%+.</span></span></label>
+          <div class="input-wrap">
+            <input type="number" id="returnRate" class="has-suffix" value="3" min="0" max="50" step="0.1">
+            <span class="input-suffix">%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDERS -->
+    <div class="card">
+      <div class="card-title">What-If Sliders</div>
+
+      <div class="slider-field">
+        <div class="slider-row">
+          <span class="slider-label">Months of Inventory Held <span class="tip"><i class="tip-icon">i</i><span class="tip-box">How many months of stock you hold at Amazon. Affects storage cost per unit.</span></span></span>
+          <span class="slider-value" id="monthsSliderVal">2 mo</span>
+        </div>
+        <input type="range" id="monthsSlider" min="1" max="12" step="1" value="2">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:3px;">
+          <span>1</span><span>6</span><span>12</span>
+        </div>
+      </div>
+
+      <div class="slider-field">
+        <div class="slider-row">
+          <span class="slider-label">ACoS %</span>
+          <span class="slider-value" id="acosSliderVal">25%</span>
+        </div>
+        <input type="range" id="acosSlider" min="0" max="80" step="0.5" value="25">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:3px;">
+          <span>0%</span><span>40%</span><span>80%</span>
+        </div>
+      </div>
+
+      <div class="slider-field">
+        <div class="slider-row">
+          <span class="slider-label">Return Rate %</span>
+          <span class="slider-value" id="returnSliderVal">3%</span>
+        </div>
+        <input type="range" id="returnSlider" min="0" max="50" step="0.5" value="3">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:3px;">
+          <span>0%</span><span>25%</span><span>50%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: RESULTS -->
+  <div>
+    <div class="warning-banner" id="warningBanner">
+      ⚠ Unprofitable product — true profit per unit is negative. Review your costs or pricing.
+    </div>
+    <div class="warning-banner" id="denomWarning">
+      ⚠️ ACoS + Referral fee exceeds 100% — break-even price cannot be calculated. Adjust inputs.
+    </div>
+
+    <!-- PROFIT HERO -->
+    <div class="profit-hero">
+      <div class="label">True Profit Per Unit</div>
+      <div class="amount" id="profitHero">$0.00</div>
+      <div class="margin-badge">
+        <span id="marginIcon">—</span>
+        <span id="marginDisplay">0% margin</span>
+      </div>
+    </div>
+
+    <!-- FEE BREAKDOWN -->
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">Fee Breakdown (Per Unit)</div>
+      <table class="fee-table">
+        <tr>
+          <td class="row-label"><span class="fee-dot" style="background:#6366f1"></span>Selling Price</td>
+          <td class="row-revenue" id="tb_price">$0.00</td>
+        </tr>
+        <tr>
+          <td class="row-label"><span class="fee-dot" style="background:#ef4444"></span>Product Cost (COGS)</td>
+          <td class="row-cost" id="tb_cogs">−$0.00</td>
+        </tr>
+        <tr>
+          <td class="row-label"><span class="fee-dot" style="background:#f43f5e"></span>Inbound Shipping</td>
+          <td class="row-cost" id="tb_shipping">−$0.00</td>
+        </tr>
+        <tr>
+          <td class="row-label"><span class="fee-dot" style="background:#f97316"></span>Referral Fee (<span id="tb_referralPct">15</span>%)</td>
+          <td class="row-cost" id="tb_referral">−$0.00</td>
+        </tr>
+        <tr>
+          <td class="row-label"><span class="fee-dot" style="background:#eab308"></span>FBA Fulfillment Fee</td>
+          <td class="row-cost" id="tb_fba">−$0.00</td>
+        </tr>
+        <tr>
+          <td class="row-label"><span class="fee-dot" style="background:#84cc16"></span>Monthly Storage (per unit)</td>
+          <td class="row-cost" id="tb_storage">−$0.00</td>
+        </tr>
+        <tr>
+          <td class="row-label"><span class="fee-dot" style="background:#06b6d4"></span>Ad Spend per Unit (ACoS)</td>
+          <td class="row-cost" id="tb_adspend">−$0.00</td>
+        </tr>
+        <tr>
+          <td class="row-label"><span class="fee-dot" style="background:#a855f7"></span>Return Cost per Unit</td>
+          <td class="row-cost" id="tb_return">−$0.00</td>
+        </tr>
+        <tr class="row-total">
+          <td><strong>True Profit per Unit</strong></td>
+          <td id="tb_profit">$0.00</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- BREAKEVEN METRICS -->
+    <div class="metrics-grid" style="margin-bottom:16px;">
+      <div class="metric-card">
+        <div class="m-label">Break-Even ACoS <span class="tip"><i class="tip-icon">i</i><span class="tip-box">The maximum ACoS you can run before going to $0 profit. Keep your actual ACoS below this.</span></span></div>
+        <div class="m-value" id="beAcos">0%</div>
+        <div class="m-desc">Max ACoS before loss</div>
+      </div>
+      <div class="metric-card">
+        <div class="m-label">Break-Even Price <span class="tip"><i class="tip-icon">i</i><span class="tip-box">The minimum selling price to break even at your current ACoS and costs.</span></span></div>
+        <div class="m-value" id="bePrice">$0.00</div>
+        <div class="m-desc">Min price at current ACoS</div>
+      </div>
+    </div>
+
+    <!-- MONTHLY SUMMARY -->
+    <div class="card">
+      <div class="card-title">Monthly Summary (<span id="unitsDisplay">100</span> units)</div>
+      <div class="monthly-row">
+        <span>Gross Revenue</span>
+        <span class="val" id="mo_revenue">$0.00</span>
+      </div>
+      <div class="monthly-row">
+        <span>Total COGS</span>
+        <span class="val" id="mo_cogs">$0.00</span>
+      </div>
+      <div class="monthly-row">
+        <span>Total Inbound Shipping</span>
+        <span class="val" id="mo_shipping">$0.00</span>
+      </div>
+      <div class="monthly-row">
+        <span>Total Referral Fees</span>
+        <span class="val" id="mo_referral">$0.00</span>
+      </div>
+      <div class="monthly-row">
+        <span>Total FBA Fees</span>
+        <span class="val" id="mo_fba">$0.00</span>
+      </div>
+      <div class="monthly-row">
+        <span>Total Storage</span>
+        <span class="val" id="mo_storage">$0.00</span>
+      </div>
+      <div class="monthly-row">
+        <span>Total Ad Spend</span>
+        <span class="val" id="mo_adspend">$0.00</span>
+      </div>
+      <div class="monthly-row">
+        <span>Total Return Costs</span>
+        <span class="val" id="mo_return">$0.00</span>
+      </div>
+      <div class="monthly-row total">
+        <span>Net Monthly Profit</span>
+        <span class="val" id="mo_profit">$0.00</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ─── Fee Tables ────────────────────────────────────────────────────────────────
+
+const REFERRAL_RATES = {
+  electronics: 0.08,
+  clothing:    0.17,
+  books:       0.15,
+  home:        0.15,
+  toys:        0.15,
+  other:       0.15,
+};
+
+const FBA_FEES = {
+  small_standard:  3.22,
+  large_standard:  5.42,
+  small_oversize:  9.73,
+  medium_oversize: 19.05,
+  large_oversize:  89.98,
+  special_oversize:158.49,
+};
+
+// Estimated average cubic feet per tier (for monthly storage calculation)
+const TIER_CUBIC_FEET = {
+  small_standard:  0.10,
+  large_standard:  0.50,
+  small_oversize:  1.50,
+  medium_oversize: 5.00,
+  large_oversize:  10.00,
+  special_oversize:20.00,
+};
+
+// Monthly storage rate per cubic foot (using off-peak Jan–Sep rate)
+const STORAGE_RATE = 0.78; // $/cu ft/month
+
+// ─── Calculation ───────────────────────────────────────────────────────────────
+
+function calculate() {
+  const price       = parseFloat(document.getElementById('price').value)      || 0;
+  const cogs        = parseFloat(document.getElementById('cogs').value)       || 0;
+  const shipping    = parseFloat(document.getElementById('shipping').value)   || 0;
+  const category    = document.getElementById('category').value;
+  const sizeTier    = document.getElementById('sizeTier').value;
+  const units       = parseFloat(document.getElementById('units').value)      || 1;
+  const acosPct     = parseFloat(document.getElementById('acos').value)       || 0;
+  const returnPct   = parseFloat(document.getElementById('returnRate').value) || 0;
+  const monthsHeld  = parseFloat(document.getElementById('monthsSlider').value) || 1;
+
+  const referralRate = REFERRAL_RATES[category];
+  const fbaFee       = FBA_FEES[sizeTier];
+  const cubicFt      = TIER_CUBIC_FEET[sizeTier];
+
+  // Per-unit costs
+  const referralFee    = price * referralRate;
+  const storagePerUnit = STORAGE_RATE * cubicFt * monthsHeld;
+  const adSpendPerUnit = price * (acosPct / 100);
+  const returnCostPerUnit = (returnPct / 100) * (cogs + fbaFee);
+
+  const totalCostPerUnit = cogs + shipping + referralFee + fbaFee + storagePerUnit + adSpendPerUnit + returnCostPerUnit;
+  const profitPerUnit    = price - totalCostPerUnit;
+  const marginPct        = price > 0 ? (profitPerUnit / price) * 100 : 0;
+
+  // Break-even ACoS: profit without ads / price
+  const profitNoAds = price - cogs - shipping - referralFee - fbaFee - storagePerUnit - returnCostPerUnit;
+  const beAcosPct   = price > 0 ? Math.max(0, (profitNoAds / price) * 100) : 0;
+
+  // Break-even price at user's target ACoS. returnCostPerUnit is price-independent (uses COGS+FBA only).
+  const denominator = 1 - referralRate - (acosPct / 100);
+  const bePrice     = denominator > 0
+    ? (cogs + shipping + fbaFee + storagePerUnit + returnCostPerUnit) / denominator
+    : Infinity;
+
+  // Monthly totals
+  const mo_revenue  = price * units;
+  const mo_cogs     = cogs  * units;
+  const mo_shipping = shipping * units;
+  const mo_referral = referralFee * units;
+  const mo_fba      = fbaFee * units;
+  const mo_storage  = storagePerUnit * units;
+  const mo_adspend  = adSpendPerUnit * units;
+  const mo_return   = returnCostPerUnit * units;
+  const mo_profit   = profitPerUnit * units;
+
+  return {
+    price, cogs, shipping, referralRate, fbaFee, storagePerUnit,
+    adSpendPerUnit, returnCostPerUnit,
+    referralFee, profitPerUnit, marginPct,
+    beAcosPct, bePrice,
+    mo_revenue, mo_cogs, mo_shipping, mo_referral, mo_fba,
+    mo_storage, mo_adspend, mo_return, mo_profit,
+    units,
+  };
+}
+
+// ─── Formatting ────────────────────────────────────────────────────────────────
+
+function fmt(n, digits = 2) {
+  return '$' + Math.abs(n).toFixed(digits);
+}
+
+function fmtSigned(n) {
+  const abs = Math.abs(n).toFixed(2);
+  return n >= 0 ? '+$' + abs : '−$' + abs;
+}
+
+function fmtPct(n, digits = 1) {
+  return n.toFixed(digits) + '%';
+}
+
+// ─── Render ────────────────────────────────────────────────────────────────────
+
+function render() {
+  const r = calculate();
+
+  // FBA fee badge
+  document.getElementById('fbaFeeDisplay').textContent = '$' + r.fbaFee.toFixed(2);
+
+  // Hero profit
+  const hero = document.getElementById('profitHero');
+  hero.textContent = (r.profitPerUnit >= 0 ? '+' : '−') + '$' + Math.abs(r.profitPerUnit).toFixed(2);
+  hero.className = 'amount ' + (r.profitPerUnit >= 0 ? 'positive' : 'negative');
+
+  // Margin badge
+  document.getElementById('marginIcon').textContent = r.profitPerUnit >= 0 ? '▲' : '▼';
+  document.getElementById('marginDisplay').textContent = fmtPct(r.marginPct) + ' margin';
+  document.getElementById('marginIcon').className = r.profitPerUnit >= 0 ? 'positive' : 'negative';
+
+  // Warning
+  document.getElementById('warningBanner').classList.toggle('show', r.profitPerUnit < 0);
+  document.getElementById('denomWarning').classList.toggle('show', r.bePrice === Infinity);
+
+  // Fee table
+  document.getElementById('tb_price').textContent    = fmt(r.price);
+  document.getElementById('tb_cogs').textContent     = '−' + fmt(r.cogs);
+  document.getElementById('tb_shipping').textContent = '−' + fmt(r.shipping);
+  document.getElementById('tb_referralPct').textContent = Math.round(r.referralRate * 100);
+  document.getElementById('tb_referral').textContent = '−' + fmt(r.referralFee);
+  document.getElementById('tb_fba').textContent      = '−' + fmt(r.fbaFee);
+  document.getElementById('tb_storage').textContent  = '−' + fmt(r.storagePerUnit);
+  document.getElementById('tb_adspend').textContent  = '−' + fmt(r.adSpendPerUnit);
+  document.getElementById('tb_return').textContent   = '−' + fmt(r.returnCostPerUnit);
+
+  const profitEl = document.getElementById('tb_profit');
+  profitEl.textContent = (r.profitPerUnit >= 0 ? '' : '−') + fmt(r.profitPerUnit);
+  profitEl.className   = r.profitPerUnit >= 0 ? 'positive' : 'negative';
+
+  // Breakeven
+  document.getElementById('beAcos').textContent  = fmtPct(r.beAcosPct);
+  document.getElementById('beAcos').className    = 'm-value ' + (r.beAcosPct > 0 ? 'positive' : 'negative');
+  document.getElementById('bePrice').textContent = r.bePrice === Infinity ? 'N/A' : fmt(r.bePrice);
+
+  // Monthly summary
+  document.getElementById('unitsDisplay').textContent = Math.round(r.units);
+  document.getElementById('mo_revenue').textContent   = fmt(r.mo_revenue);
+  document.getElementById('mo_cogs').textContent      = '−' + fmt(r.mo_cogs);
+  document.getElementById('mo_shipping').textContent  = '−' + fmt(r.mo_shipping);
+  document.getElementById('mo_referral').textContent  = '−' + fmt(r.mo_referral);
+  document.getElementById('mo_fba').textContent       = '−' + fmt(r.mo_fba);
+  document.getElementById('mo_storage').textContent   = '−' + fmt(r.mo_storage);
+  document.getElementById('mo_adspend').textContent   = '−' + fmt(r.mo_adspend);
+  document.getElementById('mo_return').textContent    = '−' + fmt(r.mo_return);
+
+  const moProfitEl = document.getElementById('mo_profit');
+  moProfitEl.textContent = (r.mo_profit >= 0 ? '' : '−') + fmt(r.mo_profit);
+  moProfitEl.className   = 'val ' + (r.mo_profit >= 0 ? '' : 'neg');
+}
+
+// ─── Sync sliders ↔ inputs ────────────────────────────────────────────────────
+
+function syncAcos(source) {
+  const val = parseFloat(source.value) || 0;
+  if (source.id === 'acosSlider') {
+    document.getElementById('acos').value = val;
+  } else {
+    document.getElementById('acosSlider').value = Math.min(80, val);
+  }
+  document.getElementById('acosSliderVal').textContent = val.toFixed(1) + '%';
+  render();
+}
+
+function syncReturn(source) {
+  const val = parseFloat(source.value) || 0;
+  if (source.id === 'returnSlider') {
+    document.getElementById('returnRate').value = val;
+  } else {
+    document.getElementById('returnSlider').value = Math.min(50, val);
+  }
+  document.getElementById('returnSliderVal').textContent = val.toFixed(1) + '%';
+  render();
+}
+
+// ─── Event Listeners ───────────────────────────────────────────────────────────
+
+document.getElementById('acosSlider').addEventListener('input',  (e) => syncAcos(e.target));
+document.getElementById('acos').addEventListener('input',        (e) => syncAcos(e.target));
+document.getElementById('returnSlider').addEventListener('input', (e) => syncReturn(e.target));
+document.getElementById('returnRate').addEventListener('input',   (e) => syncReturn(e.target));
+
+document.getElementById('monthsSlider').addEventListener('input', function() {
+  document.getElementById('monthsSliderVal').textContent = this.value + ' mo';
+  render();
+});
+
+['price','cogs','shipping','category','sizeTier','units'].forEach(id => {
+  document.getElementById(id).addEventListener('input', render);
+});
+
+// Initial render
+render();
+</script>
+</body>
+</html>
