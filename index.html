@@ -379,6 +379,61 @@
 
   .warning-banner.show { display: block; }
 
+  .tier-warning {
+    display: none;
+    background: rgba(245,158,11,.1);
+    border: 1px solid rgba(245,158,11,.3);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    font-size: 12px;
+    color: var(--yellow);
+    margin-top: 8px;
+  }
+  .tier-warning.show { display: block; }
+
+  .dim-info {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  .q4-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 10px 12px;
+    background: rgba(99,102,241,.08);
+    border: 1px solid rgba(99,102,241,.25);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+  .q4-toggle input[type="checkbox"] {
+    width: 15px; height: 15px;
+    cursor: pointer;
+    accent-color: var(--accent);
+    flex-shrink: 0;
+  }
+  .q4-toggle label {
+    font-size: 12px;
+    color: var(--label);
+    cursor: pointer;
+    margin: 0;
+    line-height: 1.4;
+  }
+  .q4-toggle label strong { color: var(--yellow); }
+
+  .aged-note {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 5px;
+    line-height: 1.5;
+  }
+  .aged-note .surcharge-active {
+    color: var(--yellow);
+    font-weight: 600;
+  }
+
   /* Tooltip */
   .tip {
     position: relative;
@@ -506,6 +561,22 @@
           <option value="special_oversize">Special Oversize</option>
         </select>
         <div class="fba-fee-badge">FBA fulfillment fee: <span id="fbaFeeDisplay">$3.22</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px;">
+          <div class="field" style="margin-bottom:0;">
+            <label>Length (in)</label>
+            <input type="number" id="dimL" value="14" min="0" step="0.1">
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label>Width (in)</label>
+            <input type="number" id="dimW" value="10" min="0" step="0.1">
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label>Height (in)</label>
+            <input type="number" id="dimH" value="4" min="0" step="0.1">
+          </div>
+        </div>
+        <div class="dim-info" id="dimWeightInfo">Dimensional weight: — lbs</div>
+        <div class="tier-warning" id="tierWarning"></div>
       </div>
 
       <div class="field">
@@ -535,15 +606,21 @@
     <div class="card">
       <div class="card-title">What-If Sliders</div>
 
+      <div class="q4-toggle">
+        <input type="checkbox" id="q4Toggle">
+        <label for="q4Toggle">Q4 Peak Season (Oct 15 – Jan 15) <strong>— $2.40/cu ft</strong></label>
+      </div>
+
       <div class="slider-field">
         <div class="slider-row">
-          <span class="slider-label">Months of Inventory Held <span class="tip"><i class="tip-icon">i</i><span class="tip-box">How many months of stock you hold at Amazon. Affects storage cost per unit.</span></span></span>
+          <span class="slider-label">Storage Duration (Months Held) <span class="tip"><i class="tip-icon">i</i><span class="tip-box">How many months of stock you hold at Amazon. Affects storage cost per unit. 180+ days triggers aged inventory surcharge.</span></span></span>
           <span class="slider-value" id="monthsSliderVal">2 mo</span>
         </div>
         <input type="range" id="monthsSlider" min="1" max="12" step="1" value="2">
         <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:3px;">
           <span>1</span><span>6</span><span>12</span>
         </div>
+        <div class="aged-note" id="agedNote">180+ days: +$0.50/unit surcharge &nbsp;|&nbsp; 365+ days: +$6.90/unit surcharge</div>
       </div>
 
       <div class="slider-field">
@@ -614,7 +691,7 @@
           <td class="row-cost" id="tb_fba">−$0.00</td>
         </tr>
         <tr>
-          <td class="row-label"><span class="fee-dot" style="background:#84cc16"></span>Monthly Storage (per unit)</td>
+          <td class="row-label"><span class="fee-dot" style="background:#84cc16"></span>Monthly Storage (per unit) <span id="storageRateLabel" style="font-size:10px;color:var(--muted);">@ $0.78/cu ft</span></td>
           <td class="row-cost" id="tb_storage">−$0.00</td>
         </tr>
         <tr>
@@ -624,6 +701,10 @@
         <tr>
           <td class="row-label"><span class="fee-dot" style="background:#a855f7"></span>Return Cost per Unit</td>
           <td class="row-cost" id="tb_return">−$0.00</td>
+        </tr>
+        <tr id="agedSurchargeRow" style="display:none;">
+          <td class="row-label"><span class="fee-dot" style="background:#f59e0b"></span>Aged Inventory Surcharge <span id="agedSurchargeLabel" style="font-size:10px;color:var(--muted);"></span></td>
+          <td class="row-cost" id="tb_aged">−$0.00</td>
         </tr>
         <tr class="row-total">
           <td><strong>True Profit per Unit</strong></td>
@@ -681,6 +762,10 @@
         <span>Total Return Costs</span>
         <span class="val" id="mo_return">$0.00</span>
       </div>
+      <div class="monthly-row" id="mo_agedRow" style="display:none;">
+        <span>Aged Inventory Surcharge</span>
+        <span class="val" id="mo_aged">$0.00</span>
+      </div>
       <div class="monthly-row total">
         <span>Net Monthly Profit</span>
         <span class="val" id="mo_profit">$0.00</span>
@@ -721,8 +806,19 @@ const TIER_CUBIC_FEET = {
   special_oversize:20.00,
 };
 
-// Monthly storage rate per cubic foot (using off-peak Jan–Sep rate)
-const STORAGE_RATE = 0.78; // $/cu ft/month
+// Monthly storage rates per cubic foot
+const STORAGE_RATE_STANDARD = 0.78;  // Jan–Sep off-peak
+const STORAGE_RATE_Q4       = 2.40;  // Oct 15–Jan 15 peak
+
+// Tier warning thresholds (weight-based, in lbs)
+const TIER_WARNINGS = {
+  small_standard:  { threshold: 1,    nextName: 'Large Standard',   nextFee: FBA_FEES.large_standard  },
+  large_standard:  { threshold: 20,   nextName: 'Small Oversize',   nextFee: FBA_FEES.small_oversize  },
+  small_oversize:  { threshold: 70,   nextName: 'Medium Oversize',  nextFee: FBA_FEES.medium_oversize },
+  medium_oversize: { threshold: 150,  nextName: 'Large Oversize',   nextFee: FBA_FEES.large_oversize  },
+  large_oversize:  { threshold: 1000, nextName: 'Special Oversize', nextFee: FBA_FEES.special_oversize },
+  special_oversize: null,
+};
 
 // ─── Calculation ───────────────────────────────────────────────────────────────
 
@@ -736,29 +832,55 @@ function calculate() {
   const acosPct     = parseFloat(document.getElementById('acos').value)       || 0;
   const returnPct   = parseFloat(document.getElementById('returnRate').value) || 0;
   const monthsHeld  = parseFloat(document.getElementById('monthsSlider').value) || 1;
+  const isQ4        = document.getElementById('q4Toggle').checked;
+  const dimL        = parseFloat(document.getElementById('dimL').value) || 0;
+  const dimW        = parseFloat(document.getElementById('dimW').value) || 0;
+  const dimH        = parseFloat(document.getElementById('dimH').value) || 0;
 
   const referralRate = REFERRAL_RATES[category];
   const fbaFee       = FBA_FEES[sizeTier];
   const cubicFt      = TIER_CUBIC_FEET[sizeTier];
+  const storageRate  = isQ4 ? STORAGE_RATE_Q4 : STORAGE_RATE_STANDARD;
+
+  // Dimensional weight
+  const dimWeight = (dimL > 0 && dimW > 0 && dimH > 0) ? (dimL * dimW * dimH) / 139 : null;
+
+  // Tier warning
+  let tierWarningMsg = null;
+  const tierWarn = TIER_WARNINGS[sizeTier];
+  if (tierWarn && dimWeight !== null && dimWeight > tierWarn.threshold * 0.9) {
+    tierWarningMsg = `⚠️ Close to ${tierWarn.nextName} — fee would jump to $${tierWarn.nextFee.toFixed(2)}`;
+  }
+
+  // Aged inventory surcharge
+  let agedSurcharge = 0;
+  let agedLabel = '';
+  if (monthsHeld >= 12) {
+    agedSurcharge = 6.90;
+    agedLabel = '365+ days';
+  } else if (monthsHeld >= 6) {
+    agedSurcharge = 0.50;
+    agedLabel = '180+ days';
+  }
 
   // Per-unit costs
-  const referralFee    = price * referralRate;
-  const storagePerUnit = STORAGE_RATE * cubicFt * monthsHeld;
-  const adSpendPerUnit = price * (acosPct / 100);
+  const referralFee       = price * referralRate;
+  const storagePerUnit    = storageRate * cubicFt * monthsHeld;
+  const adSpendPerUnit    = price * (acosPct / 100);
   const returnCostPerUnit = (returnPct / 100) * (cogs + fbaFee);
 
-  const totalCostPerUnit = cogs + shipping + referralFee + fbaFee + storagePerUnit + adSpendPerUnit + returnCostPerUnit;
+  const totalCostPerUnit = cogs + shipping + referralFee + fbaFee + storagePerUnit + adSpendPerUnit + returnCostPerUnit + agedSurcharge;
   const profitPerUnit    = price - totalCostPerUnit;
   const marginPct        = price > 0 ? (profitPerUnit / price) * 100 : 0;
 
   // Break-even ACoS: profit without ads / price
-  const profitNoAds = price - cogs - shipping - referralFee - fbaFee - storagePerUnit - returnCostPerUnit;
+  const profitNoAds = price - cogs - shipping - referralFee - fbaFee - storagePerUnit - returnCostPerUnit - agedSurcharge;
   const beAcosPct   = price > 0 ? Math.max(0, (profitNoAds / price) * 100) : 0;
 
-  // Break-even price at user's target ACoS. returnCostPerUnit is price-independent (uses COGS+FBA only).
+  // Break-even price at user's target ACoS
   const denominator = 1 - referralRate - (acosPct / 100);
   const bePrice     = denominator > 0
-    ? (cogs + shipping + fbaFee + storagePerUnit + returnCostPerUnit) / denominator
+    ? (cogs + shipping + fbaFee + storagePerUnit + returnCostPerUnit + agedSurcharge) / denominator
     : Infinity;
 
   // Monthly totals
@@ -770,15 +892,17 @@ function calculate() {
   const mo_storage  = storagePerUnit * units;
   const mo_adspend  = adSpendPerUnit * units;
   const mo_return   = returnCostPerUnit * units;
+  const mo_aged     = agedSurcharge * units;
   const mo_profit   = profitPerUnit * units;
 
   return {
-    price, cogs, shipping, referralRate, fbaFee, storagePerUnit,
-    adSpendPerUnit, returnCostPerUnit,
+    price, cogs, shipping, referralRate, fbaFee, storagePerUnit, storageRate,
+    adSpendPerUnit, returnCostPerUnit, agedSurcharge, agedLabel,
     referralFee, profitPerUnit, marginPct,
     beAcosPct, bePrice,
+    dimWeight, tierWarningMsg,
     mo_revenue, mo_cogs, mo_shipping, mo_referral, mo_fba,
-    mo_storage, mo_adspend, mo_return, mo_profit,
+    mo_storage, mo_adspend, mo_return, mo_aged, mo_profit,
     units,
   };
 }
@@ -820,6 +944,21 @@ function render() {
   document.getElementById('warningBanner').classList.toggle('show', r.profitPerUnit < 0);
   document.getElementById('denomWarning').classList.toggle('show', r.bePrice === Infinity);
 
+  // Dim weight info
+  document.getElementById('dimWeightInfo').textContent =
+    r.dimWeight !== null
+      ? `Dimensional weight: ${r.dimWeight.toFixed(2)} lbs`
+      : 'Dimensional weight: — lbs';
+
+  // Tier warning
+  const tierWarnEl = document.getElementById('tierWarning');
+  if (r.tierWarningMsg) {
+    tierWarnEl.textContent = r.tierWarningMsg;
+    tierWarnEl.classList.add('show');
+  } else {
+    tierWarnEl.classList.remove('show');
+  }
+
   // Fee table
   document.getElementById('tb_price').textContent    = fmt(r.price);
   document.getElementById('tb_cogs').textContent     = '−' + fmt(r.cogs);
@@ -827,9 +966,20 @@ function render() {
   document.getElementById('tb_referralPct').textContent = Math.round(r.referralRate * 100);
   document.getElementById('tb_referral').textContent = '−' + fmt(r.referralFee);
   document.getElementById('tb_fba').textContent      = '−' + fmt(r.fbaFee);
+  document.getElementById('storageRateLabel').textContent = `@ $${r.storageRate.toFixed(2)}/cu ft`;
   document.getElementById('tb_storage').textContent  = '−' + fmt(r.storagePerUnit);
   document.getElementById('tb_adspend').textContent  = '−' + fmt(r.adSpendPerUnit);
   document.getElementById('tb_return').textContent   = '−' + fmt(r.returnCostPerUnit);
+
+  // Aged surcharge row
+  const agedRow = document.getElementById('agedSurchargeRow');
+  if (r.agedSurcharge > 0) {
+    agedRow.style.display = '';
+    document.getElementById('agedSurchargeLabel').textContent = `(${r.agedLabel})`;
+    document.getElementById('tb_aged').textContent = '−' + fmt(r.agedSurcharge);
+  } else {
+    agedRow.style.display = 'none';
+  }
 
   const profitEl = document.getElementById('tb_profit');
   profitEl.textContent = (r.profitPerUnit >= 0 ? '' : '−') + fmt(r.profitPerUnit);
@@ -850,6 +1000,14 @@ function render() {
   document.getElementById('mo_storage').textContent   = '−' + fmt(r.mo_storage);
   document.getElementById('mo_adspend').textContent   = '−' + fmt(r.mo_adspend);
   document.getElementById('mo_return').textContent    = '−' + fmt(r.mo_return);
+
+  const moAgedRow = document.getElementById('mo_agedRow');
+  if (r.agedSurcharge > 0) {
+    moAgedRow.style.display = '';
+    document.getElementById('mo_aged').textContent = '−' + fmt(r.mo_aged);
+  } else {
+    moAgedRow.style.display = 'none';
+  }
 
   const moProfitEl = document.getElementById('mo_profit');
   moProfitEl.textContent = (r.mo_profit >= 0 ? '' : '−') + fmt(r.mo_profit);
@@ -892,9 +1050,11 @@ document.getElementById('monthsSlider').addEventListener('input', function() {
   render();
 });
 
-['price','cogs','shipping','category','sizeTier','units'].forEach(id => {
+['price','cogs','shipping','category','sizeTier','units','dimL','dimW','dimH'].forEach(id => {
   document.getElementById(id).addEventListener('input', render);
 });
+
+document.getElementById('q4Toggle').addEventListener('change', render);
 
 // Initial render
 render();
